@@ -192,8 +192,12 @@ void lsm6ds3_init(i2c_bb_state *i2c_state, spi_bb_state *spi_state, SPIDriver *s
 		regv |= LSM6DS3_ACC_GYRO_ODR_G_416Hz;
 	} else if (rate_hz <= 833) {
 		regv |= LSM6DS3_ACC_GYRO_ODR_G_833Hz;
-	} else {
+	} else if (rate_hz <= 1660 || is_trc == false){
 		regv |= LSM6DS3_ACC_GYRO_ODR_G_1660Hz;
+	} else if (rate_hz <= 3330) {
+		regv |= LSM6DS3TRC_ACC_GYRO_ODR_G_3330Hz;
+	} else {
+		regv |= LSM6DS3TRC_ACC_GYRO_ODR_G_6660Hz;
 	}
 	
 	res = write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, regv);

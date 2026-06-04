@@ -135,7 +135,7 @@ void lsm6ds3_init(i2c_bb_state *i2c_state, spi_bb_state *spi_state, SPIDriver *s
 	if (is_trc) {
 		regv |= LSM6DS3TRC_ACC_GYRO_ODR_G_6660Hz;
 	} else {
-	// On non-TRC there is no dedicated configurable gyro filter, the filtering
+		// On non-TRC there is no dedicated configurable gyro filter, the filtering
 		// seems to depend on the actual ODR, so we can't oversample it.
 		if (rate_hz <= 13) {
 			regv |= LSM6DS3_ACC_GYRO_ODR_G_13Hz;
@@ -155,7 +155,6 @@ void lsm6ds3_init(i2c_bb_state *i2c_state, spi_bb_state *spi_state, SPIDriver *s
 			regv |= LSM6DS3_ACC_GYRO_ODR_G_1660Hz;
 		}
 	}
-	
 	res = write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, regv);
 	if (!res){
 		commands_printf("LSM6DS3 Gyro Config FAILED");

@@ -81,71 +81,25 @@ void lsm6ds3_init(i2c_bb_state *i2c_state, spi_bb_state *spi_state, SPIDriver *s
 	}
 
 	// Accelerometer resolution and data rate
+	uint8_t regv = LSM6DS3_ACC_GYRO_FS_XL_16g;
+	regv |= LSM6DS3_ACC_GYRO_ODR_XL_6660Hz;
+
+	// Accelerometer filtering
 	#define LSM6DS3TRC_BW0_XL 0x1
 	#define LSM6DS3TRC_LPF1_BW_SEL 0x2
-	uint8_t regv = LSM6DS3_ACC_GYRO_BW_XL_400Hz | LSM6DS3_ACC_GYRO_FS_XL_16g;
-	if (rate_hz <= 13) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_XL_13Hz;
-	} else if (rate_hz <= 26){
-		regv |= LSM6DS3_ACC_GYRO_ODR_XL_26Hz;
-	} else if (rate_hz <= 52){
-		regv |= LSM6DS3_ACC_GYRO_ODR_XL_52Hz;
-	} else if (rate_hz <= 104){
-		regv |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
-	} else if (rate_hz <= 208){
-		regv |= LSM6DS3_ACC_GYRO_ODR_XL_208Hz;
-	} else if (rate_hz <= 416) {
-		if (is_trc && (filter >= IMU_FILTER_MEDIUM)) {
-			// ODR/4 with 833Hz
-			regv |= LSM6DS3TRC_LPF1_BW_SEL | LSM6DS3_ACC_GYRO_ODR_XL_833Hz;
-		} else {
-			// default: ODR/2 with 416Hz
-			regv |= LSM6DS3_ACC_GYRO_ODR_XL_416Hz;
-		}
-	} else if (rate_hz <= 833){
-		if (is_trc && (filter >= IMU_FILTER_MEDIUM)) {
-			// ODR/4 with 1660Hz 
-			regv |= LSM6DS3TRC_LPF1_BW_SEL | LSM6DS3_ACC_GYRO_ODR_XL_1660Hz;
-			if (filter == IMU_FILTER_HIGH) {
-				// Also enable Accelerometer Analog Chain Bandwidth = 400Hz
-				regv |= LSM6DS3TRC_BW0_XL;
-			}
-		} else {
-			// default: ODR/2 with 833Hz
-			regv |= LSM6DS3_ACC_GYRO_ODR_XL_833Hz;
-		}
-	} else if (rate_hz <= 1660){
-		if (is_trc && (filter >= IMU_FILTER_MEDIUM)) {
-			// ODR/4 with 3330Hz
-			regv |= LSM6DS3TRC_LPF1_BW_SEL | LSM6DS3_ACC_GYRO_ODR_XL_3330Hz;
-			if (filter == IMU_FILTER_HIGH) {
-				// Also enable Accelerometer Analog Chain Bandwidth = 400Hz
-				regv |= LSM6DS3TRC_BW0_XL;
-			}
-		} else {
-			regv |= LSM6DS3_ACC_GYRO_ODR_XL_1660Hz;
-		}
-	} else if (rate_hz <= 3330){
-		if (is_trc && (filter >= IMU_FILTER_MEDIUM)) {
-			// ODR/4 with 6660Hz
-			regv |= LSM6DS3TRC_LPF1_BW_SEL | LSM6DS3_ACC_GYRO_ODR_XL_6660Hz;
-			if (filter == IMU_FILTER_HIGH) {
-				// Also enable Accelerometer Analog Chain Bandwidth = 400Hz
-				regv |= LSM6DS3TRC_BW0_XL;
-			}
-		} else {
-			regv |= LSM6DS3_ACC_GYRO_ODR_XL_3330Hz;
-		}
-	} else {
-		if (is_trc && (filter >= IMU_FILTER_MEDIUM)) {
-			// ODR/2 with 6660Hz
-			regv |= LSM6DS3_ACC_GYRO_ODR_XL_6660Hz;
-			if (filter == IMU_FILTER_HIGH) {
-				// Also enable Accelerometer Analog Chain Bandwidth = 400Hz
-				regv |= LSM6DS3TRC_BW0_XL;
-			}
-		} else {
-			regv |= LSM6DS3_ACC_GYRO_ODR_XL_6660Hz;
+	if (is_trc) {
+		// Always use accelerometer analog low-pass at 400Hz
+		regv |= LSM6DS3TRC_BW0_XL;
+	} else if (rate_hz >= 208 && filter >= IMU_FILTER_MEDIUM) {
+		// Filter at ODR/4 for MEDIUM and ODR/8 for HIGH
+		// This filter also needs to be enabled in CTRL4_C
+		int scaled_rate = filter == IMU_FILTER_HIGH ? rate_hz / 2 : rate_hz;
+		if (scaled_rate <= 208) {
+			regv |= LSM6DS3_ACC_GYRO_BW_XL_50Hz;
+		} else if (scaled_rate <= 416) {
+			regv |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+		} else if (scaled_rate <= 833) {
+			regv |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
 		}
 	}
 
@@ -178,26 +132,28 @@ void lsm6ds3_init(i2c_bb_state *i2c_state, spi_bb_state *spi_state, SPIDriver *s
 	// Gyro resolution and data rate
 	regv = LSM6DS3_ACC_GYRO_FS_G_2000dps;
 
-	if (rate_hz <= 13) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_13Hz;
-	} else if (rate_hz <= 26) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_26Hz;
-	} else if (rate_hz <= 52) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_52Hz;
-	} else if (rate_hz <= 104) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
-	} else if (rate_hz <= 208) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_208Hz;
-	} else if (rate_hz <= 416) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_416Hz;
-	} else if (rate_hz <= 833) {
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_833Hz;
-	} else if (rate_hz <= 1660 || is_trc == false){
-		regv |= LSM6DS3_ACC_GYRO_ODR_G_1660Hz;
-	} else if (rate_hz <= 3330) {
-		regv |= LSM6DS3TRC_ACC_GYRO_ODR_G_3330Hz;
-	} else {
+	if (is_trc) {
 		regv |= LSM6DS3TRC_ACC_GYRO_ODR_G_6660Hz;
+	} else {
+	// On non-TRC there is no dedicated configurable gyro filter, the filtering
+		// seems to depend on the actual ODR, so we can't oversample it.
+		if (rate_hz <= 13) {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_13Hz;
+		} else if (rate_hz <= 26) {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_26Hz;
+		} else if (rate_hz <= 52) {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_52Hz;
+		} else if (rate_hz <= 104) {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
+		} else if (rate_hz <= 208) {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_208Hz;
+		} else if (rate_hz <= 416) {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_416Hz;
+		} else if (rate_hz <= 833) {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_833Hz;
+		} else {
+			regv |= LSM6DS3_ACC_GYRO_ODR_G_1660Hz;
+		}
 	}
 	
 	res = write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, regv);

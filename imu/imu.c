@@ -104,9 +104,9 @@ void imu_init(imu_config *set) {
 	}
 	if(m_settings.gyro_lowpass_filter > 0){
 		fc = m_settings.gyro_lowpass_filter / m_settings.sample_rate_hz;
-		biquad_config(&gyro_x_biquad, BQ_LOWPASS, fc);
-		biquad_config(&gyro_y_biquad, BQ_LOWPASS, fc);
-		biquad_config(&gyro_z_biquad, BQ_LOWPASS, fc);
+		biquad_config(&gyro_x_biquad, BQ_NOTCH, fc);
+		biquad_config(&gyro_y_biquad, BQ_NOTCH, fc);
+		biquad_config(&gyro_z_biquad, BQ_NOTCH, fc);
 	}
 
 	if (!imu_changed) {

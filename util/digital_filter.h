@@ -30,7 +30,8 @@ typedef struct{
 
 typedef enum {
 	BQ_LOWPASS,
-	BQ_HIGHPASS
+	BQ_HIGHPASS,
+	BQ_NOTCH
 } BiquadType;
 
 // Functions
